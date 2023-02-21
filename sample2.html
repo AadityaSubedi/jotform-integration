@@ -1,0 +1,134 @@
+
+<script type="text/javascript">
+    var XD = function(){
+        var interval_id,
+        last_hash,
+        cache_bust = 1,
+        attached_callback,
+        window = this;
+        return {
+            postMessage : function(message, target_url, target) {
+		window.targeturl =target_url;
+                if (!target_url) {
+                    return;
+                }
+                target = target || parent;  // default to parent
+                if (window['postMessage']) {
+                    // the browser supports window.postMessage, so call it with a targetOrigin
+                    // set appropriately, based on the target_url parameter.
+                    target['postMessage'](message, target_url.replace( /([^:]+:\/\/[^\/]+).*/, '$1'));
+                } else if (target_url) {
+                    // the browser does not support window.postMessage, so use the window.location.hash fragment hack
+                    target.location = target_url.replace(/#.*$/, '') + '#' + (+new Date) + (cache_bust++) + '&' + message ;
+                }
+            },
+            receiveMessage : function(callback, source_origin) {
+                // It doesn't seem to work. See api/JotForm.js
+                // browser supports window.postMessage
+                if (window['postMessage']) {
+                    // bind the callback to the actual event associated with window.postMessage
+                    if (callback) {
+                        attached_callback = function(e) {
+                            if ((typeof source_origin === 'string' && e.origin !== source_origin)
+                            || (Object.prototype.toString.call(source_origin) === "[object Function]" && source_origin(e.origin) === !1)) {
+                                 return !1;
+                             }
+                             callback(e);
+                         };
+                     }
+                     if (window['addEventListener']) {
+                         window[callback ? 'addEventListener' : 'removeEventListener']('message', attached_callback, !1);
+                     } else {
+                         window[callback ? 'attachEvent' : 'detachEvent']('onmessage', attached_callback);
+                     }
+                 } else {
+                     // a polling loop is started & callback is called whenever the location.hash changes
+                     interval_id && clearInterval(interval_id);
+                     interval_id = null;
+                     if (callback) {
+                         interval_id = setInterval(function() {
+                             var hash = document.location.hash,
+                             re = /^#?\d+&/;
+                             if (hash !== last_hash && re.test(hash)) {
+                                 last_hash = hash;
+                                 callback({data: hash.replace(re, '')});
+                             }
+                         }, 100);
+                     }
+                 }
+             }
+        };
+    }();
+
+    var REFERER = decodeURIComponent(getQuerystring("ref"));
+
+    function sendMessage(msg){
+        XD.postMessage(msg, REFERER, parent);
+    }
+
+    function getQuerystring(key, default_)
+    {
+        if (default_==null) default_="";
+
+        key = key.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
+        var regex = new RegExp("[\\?&]"+key+"=([^&#]*)");
+        var qs = regex.exec(window.location.href);
+        if(qs == null)
+            return default_;
+        else
+            return qs[1];
+    }
+</script>
+<meta name="robots" content="noindex">
+<title>Authorization · Jotform</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" type="text/css" href="/css/includes/loginBranding.css"/>
+
+<div id="myaccount" class="signin oauth-wrapper">
+    <div class="section-title">
+        <div class="big-title"><span class="green auth-text">Authorize</span> <strong>bettercollected</strong> <span>to access your Jotform account.</span></div>
+    </div>
+
+    <div class="gray-wide-box scopes" style="">
+        <div class="centered-form-cont" id="loginBox">
+
+            <span id="signinFieldset">
+                <div class="clearfix-login login-inputs">
+                    This app would like to be able to do the following :                </div>
+
+                <ul class="clearfix-login login-inputs login-input-list">
+                    <li>
+                    Read your user details                    </li>
+                    <li>
+                    Read your form details                    </li>
+                    <li>
+                    Read your form submissions                    </li>
+                                            <li> Edit your form submissions </li>
+                        <li> Add submissions to your form </li>
+                                    </ul>
+
+                <div class="oauth-button-cont">
+                    <input id="redirect_uri" type="hidden" value="" />
+                    <input id="code" type="hidden" value="98ef7e3b989b68cb75091d5734" />
+                    <input id="denyButton" type="button" class="denyButton" value=Deny />
+                    <input id="allowButton" type="button" class="buttonz allowButton" value=Allow onclick="ga('send', 'event', 'authorization', 'Button', 'Google Analytics');" />
+                </div>
+            </span>
+
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    window.onload = function() {
+        var h = document.getElementById('myaccount').clientHeight;
+        // sendMessage('resizeFrame:' + h );
+    };
+
+    document.getElementById("allowButton").onclick = function(){
+	 var urlKey = document.getElementById("code").value;
+	      sendMessage('login:' + urlKey);
+	   }
+    document.getElementById("denyButton").onclick = function(){
+        sendMessage(false);
+    };
+</script>
