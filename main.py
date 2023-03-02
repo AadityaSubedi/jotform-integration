@@ -14,11 +14,6 @@ from common.base.plugin import register_plugin_class
 from components import UserInfo
 from models import Signin
 
-router = APIRouter(
-    prefix="/api",
-    tags=["jot",],
-)
-
 app = FastAPI()
 
 
@@ -51,6 +46,7 @@ async def signin(request: Request, data: Signin):
 # include the router
 
 
-register_plugin_class(router=routers.router, route=routers.JotformRoutes(), tags=["jotform"])
+register_plugin_class(
+    router=routers.router, route=routers.JotformRoutes(), tags=["jotform"]
+)
 app.include_router(routers.router)
-app.include_router(router)
