@@ -1,3 +1,3 @@
-[submodule "bettercollected-common"]
-	path = bettercollected-common
+[submodule "common"]
+	path = common
 	url = https://github.com/bettercollected/bettercollected-common.git

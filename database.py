@@ -1,8 +1,9 @@
 import os
+from typing import Any, Iterable, List, Mapping, Optional, Union
 
 import pymongo
-from pymongo.results import InsertOneResult
-from typing import Any, Iterable, List, Mapping, Optional, Union
+from pymongo.results import InsertManyResult, InsertOneResult
+
 
 class DB:
     # Private variables (DONOT access outside the class)
@@ -42,7 +43,7 @@ class DB:
     def find_one_and_update(
         collection: str,
         query: Mapping[str, Any],
-        data:dict,
+        data: dict,
         action: str = "$set",
         return_values: Union[Mapping[str, bool], List[str]] = None,
     ) -> Optional[Mapping[str, Any]]:
@@ -56,10 +57,10 @@ class DB:
         Returns:
             Optional[Mapping[str, Any]]: Returns the document if found else None
         """
-        return DB.database[collection].find_one_and_update(query,{action: data}, return_values)
-    
-    
-    
+        return DB.database[collection].find_one_and_update(
+            query, {action: data}, return_values
+        )
+
     @staticmethod
     def find_one(
         collection: str,
@@ -77,3 +78,15 @@ class DB:
             Optional[Mapping[str, Any]]: Returns the document if found else None
         """
         return DB.database[collection].find_one(query, return_values)
+
+    @staticmethod
+    def insert_many(collection: str, data: Iterable[dict]) -> InsertManyResult:
+        """
+        Inserts more than one document in a collection.
+        Args:
+            collection (str): Collection to insert to
+            data (dict): The data to insert
+        Returns:
+            InsertManyResult: Information about Insertion
+        """
+        return DB.database[collection].insert_many(data)
